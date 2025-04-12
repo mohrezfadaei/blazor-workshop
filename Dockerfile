@@ -9,7 +9,7 @@ WORKDIR /app/src
 RUN dotnet build
 RUN dotnet publish ./BlazingPizza.Server/BlazingPizza.Server.csproj -c Release -o /app/publish
 
-FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS final
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS final
 
 WORKDIR /app
 
@@ -18,6 +18,6 @@ WORKDIR /app
 
 COPY --from=builder /app/publish .
 
-EXPOSE 5000
+EXPOSE 80
 
 ENTRYPOINT ["dotnet", "BlazingPizza.Server.dll"]
