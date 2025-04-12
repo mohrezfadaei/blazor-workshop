@@ -1,0 +1,6 @@
+services:
+  blazor-workshop:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: blazor-workshop:latest
