@@ -1,0 +1,58 @@
+name: Release Tagged Docker Versions
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version (e.g. 1.2.3)"
+        required: true
+      commit_sha:
+        description: "Commit SHA (short)"
+        required: true
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: ${{ github.repository_owner }}
+  IMAGE: ghcr.io/${{ github.repository_owner }}/blazor-workshop
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Parse version
+        id: version
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          COMMIT="${{ github.event.inputs.commit_sha }}"
+          MAJOR=$(echo $VERSION | cut -d. -f1)
+          MINOR=$(echo $VERSION | cut -d. -f2)
+          PATCH=$(echo $VERSION | cut -d. -f3 | cut -d- -f1)
+          echo "full=$VERSION" >> $GITHUB_OUTPUT
+          echo "major=$MAJOR" >> $GITHUB_OUTPUT
+          echo "minor=$MINOR" >> $GITHUB_OUTPUT
+          echo "patch=$PATCH" >> $GITHUB_OUTPUT
+          echo "commit=$COMMIT" >> $GITHUB_OUTPUT
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Pull, tag & push image
+        run: |
+          docker pull $IMAGE:${{ steps.version.outputs.commit }}
+
+          docker tag $IMAGE:${{ steps.version.outputs.commit }} $IMAGE:latest
+          docker tag $IMAGE:${{ steps.version.outputs.commit }} $IMAGE:${{ steps.version.outputs.major }}
+          docker tag $IMAGE:${{ steps.version.outputs.commit }} $IMAGE:${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}
+          docker tag $IMAGE:${{ steps.version.outputs.commit }} $IMAGE:${{ steps.version.outputs.full }}
+
+          docker push $IMAGE:latest
+          docker push $IMAGE:${{ steps.version.outputs.major }}
+          docker push $IMAGE:${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}
+          docker push $IMAGE:${{ steps.version.outputs.full }}
+
+      - run: docker logout ghcr.io
