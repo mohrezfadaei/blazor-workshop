@@ -18,6 +18,6 @@ WORKDIR /app
 
 COPY --from=builder /app/publish .
 
-EXPOSE 5000
+EXPOSE 80
 
 ENTRYPOINT ["dotnet", "BlazingPizza.Server.dll"]
